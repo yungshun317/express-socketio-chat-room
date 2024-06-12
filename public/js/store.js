@@ -1,6 +1,6 @@
 let username;
 let socketId;
-let roomId = "frameworks";
+let roomId = "rest";
 let activeChatboxes = [];
 
 const getUsername = () => {

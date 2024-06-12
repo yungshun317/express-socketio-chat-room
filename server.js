@@ -19,10 +19,6 @@ let connectedPeers = [];
 io.on("connection", (socket) => {
     console.log(socket.id);
 
-    socket.on("group-chat-message", (data) => {
-        io.emit("group-chat-message", data)
-    });
-
     socket.on("register-new-user", (userData) => {
         const { username, roomId } = userData;
 
@@ -39,10 +35,48 @@ io.on("connection", (socket) => {
         broadcastConnectedPeers();
     });
 
+    socket.on("group-chat-message", (data) => {
+        io.emit("group-chat-message", data)
+    });
+
     socket.on("room-message", (data) => {
         const { roomId } = data;
 
         io.to(roomId).emit("room-message", data);
+    });
+
+    socket.on("direct-message", (data) => {
+        const { receiverSocketId } = data;
+
+        const connectedPeer = connectedPeers.find(
+            (peer) => peer.socketId === receiverSocketId
+        );
+
+        if (connectedPeer) {
+            const authorData = {
+                ...data,
+                isAuthor: true,
+            };
+
+            // Emit event with message to ourself
+            socket.emit("direct-message", authorData);
+
+            // Emit an event to receiver of the message
+            io.to(receiverSocketId).emit("direct-message", data);
+        }
+    });
+
+    socket.on("disconnect", () => {
+        connectedPeers = connectedPeers.filter(
+            (peer) => peer.socketId !== socket.id
+        );
+        broadcastConnectedPeers();
+
+        const data = {
+            socketIdOfDisconnectedPeer: socket.id,
+        };
+
+        io.emit("peer-disconnected", data);
     });
 });
 
