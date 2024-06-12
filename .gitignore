@@ -32,3 +32,4 @@ yarn-error.log*
 /static/images
 /static/env-maps
 /static/fonts
+/public/socket.io/
