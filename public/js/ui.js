@@ -1,6 +1,6 @@
 import store from "./store.js";
 import elements from "./elements.js";
-import socketHandler from "./socketHandler";
+import socketHandler from "./socketHandler.js";
 
 const goToChatPage = () => {
     const introductionPage = document.querySelector(".introduction_page");
@@ -47,13 +47,104 @@ const createGroupChatbox = () => {
         if (key === "Enter") {
             const author = store.getUsername();
             const messageContent = event.target.value;
-            // send message to socket.io server
+            // Send message to socket.io server
             socketHandler.sendGroupChatMessage(author, messageContent);
 
             newMessageInput.value = "";
         }
     });
 }
+
+const appendGroupChatMessage = (data) => {
+    const groupChatboxMessagesContainer =
+        document.getElementById(chatboxMessagesId);
+    const chatMessage = elements.getGroupChatMessage(data);
+    groupChatboxMessagesContainer.appendChild(chatMessage);
+};
+
+const updateActiveChatboxes = (data) => {
+    // Update active chat boxes
+    const { connectedPeers } = data;
+    const userSocketId = store.getSocketId();
+
+    connectedPeers.forEach((peer) => {
+        const activeChatboxes = store.getActiveChatboxes();
+        const activeChatbox = activeChatboxes.find(
+            (chatbox) => peer.socketId === chatbox.socketId
+        );
+
+        if (!activeChatbox && peer.socketId !== userSocketId) {
+            createNewUserChatbox(peer);
+        }
+    });
+};
+
+const createNewUserChatbox = (peer) => {
+    const chatboxId = peer.socketId;
+    const chatboxMessagesId = `${peer.socketId}-messages`;
+    const chatboxInputId = `${peer.socketId}-input`;
+
+    const data = {
+        chatboxId,
+        chatboxMessagesId,
+        chatboxInputId,
+        chatboxLabel: peer.username,
+    };
+
+    const chatbox = elements.getChatbox(data);
+    // Append new chatbox to the DOM
+    const chatboxesContainer = document.querySelector(".chatboxes_container");
+    chatboxesContainer.appendChild(chatbox);
+
+    // Register event listeners for chatbox input to send a message to other user
+    const newMessageInput = document.getElementById(chatboxInputId);
+    newMessageInput.addEventListener("keydown", (event) => {
+        const key = event.key;
+
+        if (key === "Enter") {
+            const author = store.getUsername();
+            const messageContent = event.target.value;
+            const receiverSocketId = peer.socketId;
+            const authorSocketId = store.getSocketId();
+
+            const data = {
+                author,
+                messageContent,
+                receiverSocketId,
+                authorSocketId,
+            };
+
+            socketHandler.sendDirectMessage(data);
+            newMessageInput.value = "";
+        }
+    });
+
+    // Push to active chatboxes new user box
+    const activeChatboxes = store.getActiveChatboxes();
+    const newActiveChatboxes = [...activeChatboxes, peer];
+    store.setActiveChatboxes(newActiveChatboxes);
+};
+
+const appendDirectChatMessage = (messageData) => {
+    // appending direct message
+    const { authorSocketId, author, messageContent, isAuthor, receiverSocketId } =
+        messageData;
+
+    const messagesContainer = isAuthor
+        ? document.getElementById(`${receiverSocketId}-messages`)
+        : document.getElementById(`${authorSocketId}-messages`);
+
+    if (messagesContainer) {
+        const data = {
+            author,
+            messageContent,
+            alignRight: isAuthor ? true : false,
+        };
+
+        const message = elements.getDirectChatMessage(data);
+        messagesContainer.appendChild(message);
+    }
+};
 
 const createRoomChatbox = () => {
     const roomId = store.getRoomId();
@@ -97,6 +188,21 @@ const createRoomChatbox = () => {
     });
 }
 
+const appendRoomChatMessage = (data) => {
+    const { roomId } = data;
+
+    const chatboxMessagesId = `${roomId}-messages`;
+    const roomChatboxMessagesContainer =
+        document.getElementById(chatboxMessagesId);
+
+    const chatMessage = elements.getGroupChatMessage(data);
+    roomChatboxMessagesContainer.appendChild(chatMessage);
+};
+
 export default {
-    goToChatPage
+    goToChatPage,
+    appendGroupChatMessage,
+    updateActiveChatboxes,
+    appendDirectChatMessage,
+    appendRoomChatMessage
 };

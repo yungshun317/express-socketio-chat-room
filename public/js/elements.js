@@ -19,6 +19,31 @@ const getChatbox = (data) => {
     return chatboxContainer;
 };
 
+const getGroupChatMessage = (data) => {
+    const { author, messageContent } = data;
+    const messageContainer = document.createElement("div");
+    messageContainer.classList.add("message_container");
+    messageContainer.innerHTML = `
+    <p class='message_paragraph'>
+        <span class='message_author'>${author}: </span>${messageContent}
+    </p>
+    `;
+
+    return messageContainer;
+};
+
+const getDirectChatMessage = (data) => {
+    const { messageContent, alignRight } = data;
+    const messageContainer = document.createElement("div");
+
+    const messageClass = alignRight ? "message_right" : "message_left";
+
+    messageContainer.innerHTML = `<p class='${messageClass}'>${messageContent}</p>`;
+    return messageContainer;
+};
+
 export default {
-    getChatbox
+    getChatbox,
+    getGroupChatMessage,
+    getDirectChatMessage
 };
