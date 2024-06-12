@@ -14,6 +14,46 @@ app.get("/", (req, res) => {
 
 const io = require("socket.io")(server);
 
+let connectedPeers = [];
+
+io.on("connection", (socket) => {
+    console.log(socket.id);
+
+    socket.on("group-chat-message", (data) => {
+        io.emit("group-chat-message", data)
+    });
+
+    socket.on("register-new-user", (userData) => {
+        const { username, roomId } = userData;
+
+        const newPeer = {
+            username,
+            socketId: socket.id,
+            roomId
+        };
+
+        // Join `socket.io` room
+        socket.join(roomId);
+
+        connectedPeers = [...connectedPeers, newPeer];
+        broadcastConnectedPeers();
+    });
+
+    socket.on("room-message", (data) => {
+        const { roomId } = data;
+
+        io.to(roomId).emit("room-message", data);
+    });
+});
+
+const broadcastConnectedPeers = () => {
+    const data = {
+        connectedPeers,
+    };
+
+    io.emit("active-peers", data);
+};
+
 server.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
 });

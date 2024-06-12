@@ -1,6 +1,7 @@
 let username;
 let socketId;
 let roomId = "frameworks";
+let activeChatboxes = [];
 
 const getUsername = () => {
     return username;
@@ -18,6 +19,14 @@ const setSocketId = (id) => {
     socketId = id;
 };
 
+const getActiveChatboxes = () => {
+    return activeChatboxes;
+};
+
+const setActiveChatboxes = (chatboxes) => {
+    activeChatboxes = chatboxes;
+};
+
 const setRoomId = (id) => {
     roomId = id;
 };
@@ -31,6 +40,8 @@ export default {
     setUsername,
     getSocketId,
     setSocketId,
+    getActiveChatboxes,
+    setActiveChatboxes,
     getRoomId,
     setRoomId
 }

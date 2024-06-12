@@ -22,7 +22,22 @@ const registerActiveSession = () => {
     socket.emit("register-new-user", userData);
 };
 
+const sendGroupChatMessage = (author, messageContent) => {
+    const messageData = {
+        author,
+        messageContent,
+    };
+
+    socket.emit("group-chat-message", messageData);
+};
+
+const sendRoomMessage = (data) => {
+    socket.emit("room-message", data);
+};
+
 export default {
     connectToSocketIoServer,
-    registerActiveSession
+    registerActiveSession,
+    sendGroupChatMessage,
+    sendRoomMessage
 };
